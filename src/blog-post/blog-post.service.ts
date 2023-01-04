@@ -1,8 +1,12 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CategoryService } from 'src/category/category.service';
 import { Category } from 'src/category/entity/category.entity';
-import { DeleteResult, InsertResult, Repository, UpdateResult } from 'typeorm';
+import { DeleteResult, Repository } from 'typeorm';
 import { InsertBlogPostDto } from './dto/insert-blog-post.dto';
 import { BlogPost } from './entity/blog-post.entity';
 
@@ -18,8 +22,10 @@ export class BlogPostService {
     return this.blogPostRepository.find();
   }
 
-  findById(id: number): Promise<BlogPost | undefined> {
-    return this.blogPostRepository.findOneByOrFail({ id });
+  async findById(id: number): Promise<BlogPost | undefined> {
+    const post = await this.blogPostRepository.findOneByOrFail({ id });
+    console.log(JSON.stringify(post));
+    return post;
   }
 
   async create(insertBlogPostDto: InsertBlogPostDto): Promise<BlogPost> {
@@ -34,9 +40,10 @@ export class BlogPostService {
     const blogPost = new BlogPost();
     blogPost.title = insertBlogPostDto.title;
     blogPost.contents = insertBlogPostDto.text;
-    blogPost.category = category;
+    blogPost.categoryId = insertBlogPostDto.categoryId;
 
-    return this.blogPostRepository.save(blogPost);
+    const { identifiers } = await this.blogPostRepository.insert(blogPost);
+    return this.findById(identifiers[0].id);
   }
 
   async update(
@@ -52,12 +59,17 @@ export class BlogPostService {
     }
 
     const blogPost = new BlogPost();
-    blogPost.id = id;
     blogPost.title = insertBlogPostDto.title;
     blogPost.contents = insertBlogPostDto.text;
-    blogPost.category = category;
+    blogPost.categoryId = insertBlogPostDto.categoryId;
 
-    return this.blogPostRepository.save(blogPost);
+    const result = await this.blogPostRepository.update(id, blogPost);
+
+    if (result.affected === 0) {
+      throw new NotFoundException();
+    }
+
+    return this.findById(id);
   }
 
   async deleteAll(): Promise<BlogPost[]> {

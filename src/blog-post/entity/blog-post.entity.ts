@@ -23,6 +23,6 @@ export class BlogPost {
   @CreateDateColumn()
   timestamp: Date;
 
-  @ManyToOne(() => Category, (category) => category.id)
-  category: Category;
+  @Column()
+  categoryId: number;
 }
