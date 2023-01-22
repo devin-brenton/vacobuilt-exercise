@@ -9,6 +9,7 @@ import {
   Put,
 } from '@nestjs/common';
 import { BlogPostService } from './blog-post.service';
+import { InsertBlogPostDto } from './dto/insert-blog-post.dto';
 
 @Controller('posts')
 export class BlogPostController {
@@ -32,7 +33,7 @@ export class BlogPostController {
   @Put('/:postId')
   updateBlogPost(
     @Param('postId', ParseIntPipe) postId: number,
-    @Body() insertBlogPostDto: any,
+    @Body() insertBlogPostDto: InsertBlogPostDto,
   ) {
     return this.blogPostService.update(postId, insertBlogPostDto);
   }
